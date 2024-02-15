@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from .QA_model import Query_and_reArrange
 from .TransformerEncoderLayer import TransformerEncoderLayer as TransformerEncoderLayerRPE
 from .prior_dataset import NUM_INSTR_CLASS, NUM_TIME_CODE, TOTAL_LEN_BIN, ABS_POS_BIN, REL_POS_BIN
+from tqdm import tqdm
 
 class Prior(nn.Module):
     def __init__(self, mixture_encoder=None,
@@ -288,7 +289,8 @@ class Prior(nn.Module):
         #else:
         function = torch.empty((batch, 0, max_track)).long().to(mix.device)
 
-        for idx in range(self.func_res*num_2bar):
+        print('--- Run autoregressive function ---')
+        for idx in tqdm(range(self.func_res*num_2bar)):
             if (idx < self.func_res) and (func_prompt is not None):
                 start = torch.cat([start, self.func_embedding(function[:, idx-1: idx, :])], dim=1)
                 function = torch.cat([function, func_prompt[:, idx: idx+1, :]], dim=1) 

@@ -45,7 +45,8 @@ def load_premise(DATA_FILE_ROOT, DEVICE):
     REF = []
     REF_PROG = []
     REF_MIX = []
-    for (_, prog, function, _, _, _) in loader:
+    print('--- Creating REF ---') #can save and load to save time
+    for (_, prog, function, _, _, _) in tqdm(loader):
         prog = prog[0, :]
 
         REF.extend([batch for batch in function])

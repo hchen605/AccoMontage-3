@@ -178,6 +178,7 @@ def dp_search(query_phrases, seg_query, acc_pool, edge_weights, texture_filter=N
     record = []
 
     #Searching for phrase 2, 3, ...
+    print('--- Dynamic Programming search ---')
     for i in tqdm(range(1, len(query_length))):
         mel, acc, chord, _, _, song_ref = acc_pool[query_length[i]]
         weight_key = f"l_{str(query_length[i-1]).zfill(2)}_{str(query_length[i]).zfill(2)}"
@@ -259,6 +260,7 @@ def re_harmonization(lead_sheet, chord_table, query_phrases, indices, shifts, ac
     phrase_mean_vel = []
     cc_roll = np.empty((0, 128))
     #retrive texture donor data of the corrresponding indices from the acc_pool
+    print('--- Retrive texture donor data of the corrresponding indices from the acc_pool')
     for i, idx in enumerate(indices):
         length = query_phrases[i][-2]
         shift = shifts[i]
@@ -294,6 +296,7 @@ def re_harmonization(lead_sheet, chord_table, query_phrases, indices, shifts, ac
     est_x = model.inference(acc_roll, gt_chord, sample=False)
     acc_roll = cvt.grid2pr(est_x.reshape(-1, 15, 6))
     #interpolate MIDI velocity
+    print('--- Interpolate MIDI velocity')
     adapt_vel_roll = np.zeros(vel_roll.shape)
     masked_dyn_matrix = np.ma.masked_equal(vel_roll, value=0)
     mean = np.mean(masked_dyn_matrix, axis=-1)
@@ -312,6 +315,7 @@ def re_harmonization(lead_sheet, chord_table, query_phrases, indices, shifts, ac
         adapt_vel_roll[t, p] = dyn_curve(t)
     adapt_vel_roll = np.clip(adapt_vel_roll, a_min=0, a_max=127)
     #reconstruct MIDI
+    print('--- Reconstruct MIDI')
     accompaniment = np.stack([acc_roll, adapt_vel_roll, cc_roll], axis=-1)[np.newaxis, :, :, :]
     midi_recon = cvt.matrix2midi_with_dynamics(accompaniment, programs=[0], init_tempo=tempo)
     melody_track = cvt.melody_matrix2data(melody_matrix=lead_sheet[:, :130], tempo=tempo)
