@@ -75,7 +75,7 @@ def leadsheet2matrix(path, melody_track_ID=0):
         chord_start, chord_end, chord_symbol = chord
         chord_start = np.argmin(np.abs(quaver - chord_start))
         chord_end =  np.argmin(np.abs(quaver - chord_end))
-        chord_root, bit_map, bass = mir_eval.chord.encode(chord_symbol)
+        chord_root, bit_map, bass = mir_eval.chord.encode(chord_symbol)#https://github.com/craffel/mir_eval/blob/main/mir_eval/chord.py
         chord = np.concatenate([np.array([chord_root]), np.roll(bit_map, shift=int(chord_root)), np.array([bass])])
         chord_roll[chord_start: chord_end] = chord
     chord_roll[np.sum(chord_roll, axis=1)==0, 0]=-1

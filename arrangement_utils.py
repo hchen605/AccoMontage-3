@@ -16,6 +16,8 @@ from orchestrator.QA_dataset import SLAKH_CLASS_PROGRAMS
 from orchestrator.utils import grid2pr, pr2grid, matrix2midi, midi2matrix
 
 from orchestrator.prior_dataset import TOTAL_LEN_BIN, ABS_POS_BIN, REL_POS_BIN
+import json
+import pickle
 
 SLAKH_CLASS_MAPPING = {v: k for k, v in EMBED_PROGRAM_MAPPING.items()}
 
@@ -66,6 +68,70 @@ def load_premise(DATA_FILE_ROOT, DEVICE):
     print('Finished.')
     return piano_arranger, orchestrator, (acc_pool, edge_weights, texture_filter), (REF, REF_PROG, REF_MIX)
 
+def load_premise_preload(DATA_FILE_ROOT, DEVICE):
+    """Load AccoMontage Search Space"""
+    print('Loading AccoMontage piano texture search space. This may take 1 or 2 minutes ...')
+    data = np.load(os.path.join(DATA_FILE_ROOT, 'phrase_data.npz'), allow_pickle=True)
+    melody = data['melody']
+    acc = data['acc']
+    chord = data['chord']
+    vel = data['velocity']
+    cc = data['cc']
+    acc_pool = {}
+    for LEN in tqdm(range(2, 13)):
+        (mel, acc_, chord_, vel_, cc_, song_reference) = find_by_length(melody, acc, chord, vel, cc, LEN)
+        acc_pool[LEN] = (mel, acc_, chord_, vel_, cc_, song_reference)
+    texture_filter = get_texture_filter(acc_pool)
+    edge_weights=np.load(os.path.join(DATA_FILE_ROOT, 'edge_weights.npz'), allow_pickle=True)
+
+    # Define the file path where you want to save the dictionary
+    #file_path = 'acc_pool.json'
+    # Save the dictionary to a JSON file
+    #with open(os.path.join(DATA_FILE_ROOT,file_path), 'w') as f:
+    #    json.dump(acc_pool, f)
+    #with open(file_path, 'r') as f:
+    #    acc_pool = json.load(f)
+
+    """Load Q&A Prompt Search Space"""
+    print('loading orchestration prompt search space ...')
+    slakh_dir = os.path.join(DATA_FILE_ROOT, 'Slakh2100_inference_set')
+    #dataset = Slakh2100_Pop909_Dataset(slakh_dir=slakh_dir, pop909_dir=None, debug_mode=False, split='validation', mode='train')
+
+    #loader = DataLoader(dataset, batch_size=1, shuffle=True, collate_fn=lambda b:collate_fn(b, DEVICE))
+    # REF = []
+    # REF_PROG = []
+    # REF_MIX = []
+    print('--- Creating REF ---') #can save and load to save time
+    # for (_, prog, function, _, _, _) in tqdm(loader):
+    #     prog = prog[0, :]
+
+    #     REF.extend([batch for batch in function])
+    #     REF_PROG.extend([prog for _ in range(len(function))])
+    #     REF_MIX.append(torch.sum(function, dim=1))
+    # REF_MIX = torch.cat(REF_MIX, dim=0)
+
+    # def save_lists(file_path, *lists):
+    #     with open(file_path, 'wb') as f:
+    #         pickle.dump(lists, f)
+    def load_lists(file_path):
+        with open(file_path, 'rb') as f:
+            loaded_lists = pickle.load(f)
+        return loaded_lists
+
+    file_path = os.path.join(DATA_FILE_ROOT, 'REF.pkl')
+    #save_lists(file_path, REF, REF_PROG, REF_MIX)
+    REF, REF_PROG, REF_MIX = load_lists(file_path)
+    """Initialize orchestration model (Prior + Q&A)"""
+    print('Initialize model ...')
+    prior_model_path = os.path.join(DATA_FILE_ROOT, 'params_prior.pt')
+    QaA_model_path = os.path.join(DATA_FILE_ROOT, 'params_qa.pt')
+    orchestrator = Prior.init_inference_model(prior_model_path, QaA_model_path, DEVICE=DEVICE)
+    orchestrator.to(DEVICE)
+    orchestrator.eval()
+    piano_arranger = DisentangleVAE.init_model(torch.device('cuda')).cuda()
+    piano_arranger.load_state_dict(torch.load(os.path.join(DATA_FILE_ROOT, 'params_reharmonizer.pt')))
+    print('Finished.')
+    return piano_arranger, orchestrator, (acc_pool, edge_weights, texture_filter), (REF, REF_PROG, REF_MIX)
 
 def read_lead_sheet(DEMO_ROOT, SONG_NAME, SEGMENTATION, NOTE_SHIFT, melody_track_ID=0):
     melody_roll, chord_roll = cvt.leadsheet2matrix(os.path.join(DEMO_ROOT, SONG_NAME, 'lead sheet.mid'), melody_track_ID)
@@ -81,7 +147,7 @@ def read_lead_sheet(DEMO_ROOT, SONG_NAME, SEGMENTATION, NOTE_SHIFT, melody_track
         chord_roll[-pad_len:, 0] = -1
         chord_roll[-pad_len:, -1] = -1
 
-    CHORD_TABLE = np.stack([cvt.expand_chord(chord) for chord in chord_roll[::4]], axis=0)
+    CHORD_TABLE = np.stack([cvt.expand_chord(chord) for chord in chord_roll[::4]], axis=0) #expand 14-D chord feature to 36-D
     LEADSHEET = np.concatenate((melody_roll, chord_roll[:, 1: -1]), axis=-1)    #T*142, quantized at 16th
     query_phrases = split_phrases(SEGMENTATION) #[('A', 8, 0), ('A', 8, 8), ('B', 8, 16), ('B', 8, 24)]
 
