@@ -20,9 +20,10 @@ piano_arranger, orchestrator, piano_texture, band_prompt = load_premise_preload(
 
 """Set input lead sheet"""
 #SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Castles in the Air', 'A8A8B8B8', 1, 100   #1 beat in the pick-up measure
-SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Jingle Bells', 'A8B8A8', 0, 100
+#SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Jingle Bells', 'A8B8A8', 0, 100
 #SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Sally Garden', 'A4A4B4A4', 0, 75
 #SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Auld Lang Syne', 'A8B8A8B8', 1, 80
+SONG_NAME, SEGMENTATION, PICKUP_BEAT, TEMPO = 'Honestly', 'A4A4B4', 0, 70
 
 """Set texture pre-filtering for piano arrangement (default random)"""
 RHTHM_DENSITY = 4 #np.random.randint(3, 5)
@@ -31,17 +32,16 @@ PREFILTER = (RHTHM_DENSITY, VOICE_NUMBER)
 
 """Set if use a 2-bar prompt for full-band arrangement (default True)"""
 USE_PROMPT = True
-lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT)
+#midi_path = f'./demo/{SONG_NAME}/Honestly_Piano_12.midi'
+midi_path = 'Honestly_Piano_12.midi'
+lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT, midi_path)
 
-"""have a quick listen to the lead sheet"""
-midi_path = f'./demo/{SONG_NAME}/lead sheet.mid'
-# audio_path = midi_path.replace('.mid', '.wav')
-# FluidSynth("/usr/share/sounds/sf2/FluidR3_GM.sf2", 16000).midi_to_audio(midi_path, audio_path)
-# ipd.Audio(audio_path, rate=16000)
+#"""have a quick listen to the lead sheet"""
+
 print(' -- Load Piano lead sheet MIDI ready -- ')
 
 midi_piano, acc_piano = piano_arrangement(*lead_sheet, *piano_texture, piano_arranger, PREFILTER, TEMPO)
-midi_path = f'./demo/{SONG_NAME}/arrangement_piano_hh.mid'
+midi_path = f'./demo/{SONG_NAME}/arrangement_piano.mid'
 midi_piano.write(midi_path)
 
 func_prompt = prompt_sampling(acc_piano, *band_prompt, DEVICE)
@@ -55,7 +55,7 @@ else: #condition with instrument set only
 mel_track = pyd.Instrument(program=82, is_drum=False, name='melody')
 mel_track.notes = midi_piano.instruments[0].notes
 midi_band.instruments.append(mel_track)
-midi_path = f'./demo/{SONG_NAME}/arrangement_band_hh.mid'
+midi_path = f'./demo/{SONG_NAME}/arrangement_band.mid'
 midi_band.write(midi_path)
 
 print(' -- Full band MIDI ready -- ')

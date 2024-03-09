@@ -31,10 +31,12 @@ PREFILTER = (RHTHM_DENSITY, VOICE_NUMBER)
 
 """Set if use a 2-bar prompt for full-band arrangement (default True)"""
 USE_PROMPT = True
-lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT)
+midi_path = 'lead sheet.mid'
+lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT, midi_path)
+#lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT)
 
 """have a quick listen to the lead sheet"""
-midi_path = f'./demo/{SONG_NAME}/lead sheet.mid'
+#midi_path = f'./demo/{SONG_NAME}/lead sheet.mid'
 # audio_path = midi_path.replace('.mid', '.wav')
 # FluidSynth("/usr/share/sounds/sf2/FluidR3_GM.sf2", 16000).midi_to_audio(midi_path, audio_path)
 # ipd.Audio(audio_path, rate=16000)

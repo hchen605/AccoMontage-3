@@ -133,8 +133,8 @@ def load_premise_preload(DATA_FILE_ROOT, DEVICE):
     print('Finished.')
     return piano_arranger, orchestrator, (acc_pool, edge_weights, texture_filter), (REF, REF_PROG, REF_MIX)
 
-def read_lead_sheet(DEMO_ROOT, SONG_NAME, SEGMENTATION, NOTE_SHIFT, melody_track_ID=0):
-    melody_roll, chord_roll = cvt.leadsheet2matrix(os.path.join(DEMO_ROOT, SONG_NAME, 'lead sheet.mid'), melody_track_ID)
+def read_lead_sheet(DEMO_ROOT, SONG_NAME, SEGMENTATION, NOTE_SHIFT, MIDI_FILE, melody_track_ID=0):
+    melody_roll, chord_roll = cvt.leadsheet2matrix(os.path.join(DEMO_ROOT, SONG_NAME, MIDI_FILE), melody_track_ID)
     assert(len(melody_roll == len(chord_roll)))
     if NOTE_SHIFT != 0:
         melody_roll = melody_roll[int(NOTE_SHIFT*4):, :]
