@@ -34,6 +34,7 @@ PREFILTER = (RHTHM_DENSITY, VOICE_NUMBER)
 USE_PROMPT = True
 #midi_path = f'./demo/{SONG_NAME}/Honestly_Piano_12.midi'
 midi_path = 'Honestly_Piano_12.midi'
+#midi_in = pyd.PrettyMIDI(os.path.join('./demo', SONG_NAME, midi_path))
 lead_sheet = read_lead_sheet('./demo', SONG_NAME, SEGMENTATION, PICKUP_BEAT, midi_path)
 
 #"""have a quick listen to the lead sheet"""
@@ -52,9 +53,12 @@ if USE_PROMPT:  #condition with both instrument set and track function of the fi
 else: #condition with instrument set only
     instruments, track_function = func_prompt
     midi_band = orchestration(acc_piano, None, instruments, None, orchestrator, DEVICE, blur=.25, p=.05, t=8, tempo=TEMPO)
-mel_track = pyd.Instrument(program=82, is_drum=False, name='melody')
+mel_track = pyd.Instrument(program=0, is_drum=False, name='melody')
 mel_track.notes = midi_piano.instruments[0].notes
 midi_band.instruments.append(mel_track)
+
+#midi_band.instruments.append(midi_in.instruments[0])
+
 midi_path = f'./demo/{SONG_NAME}/arrangement_band.mid'
 midi_band.write(midi_path)
 
